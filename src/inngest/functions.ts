@@ -17,6 +17,7 @@ import {
 import { z } from 'zod'
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from '@/prompt'
 import { prisma } from '@/lib/db'
+import { SANDBOX_TIMEOUT } from './types'
 
 interface AgentState {
   summary: string
@@ -29,6 +30,7 @@ export const codeAgentFunction = inngest.createFunction(
   async ({ event, step }) => {
     const sandboxId = await step.run('get-sandbox-id', async () => {
       const sandbox = await Sandbox.create('vibe-nextjs-filway-002')
+      await sandbox.setTimeout(SANDBOX_TIMEOUT)
       return sandbox.sandboxId
     })
 
@@ -44,6 +46,7 @@ export const codeAgentFunction = inngest.createFunction(
           orderBy: {
             createdAt: 'desc',
           },
+          take: 5,
         })
 
         for (const message of messages) {
@@ -54,7 +57,7 @@ export const codeAgentFunction = inngest.createFunction(
           })
         }
 
-        return formattedMessages
+        return formattedMessages.reverse()
       }
     )
 
